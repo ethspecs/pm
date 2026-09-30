@@ -16,7 +16,9 @@ TBD
 
 All criteria are scored on a 0–3 scale. A score of 4 may be used in exceptional circumstances where the complexity or impact exceeds the defined criteria.
 
-##### EVM Gas rule changes
+In the abbreviations below, `+` means added and `~` means modified.
+
+##### GAS — EVM Gas rule changes
 
 New EVM gas accounting rules
 - 0. No gas accounting changes.
@@ -24,7 +26,7 @@ New EVM gas accounting rules
 - 2. A new gas accounting mechanism is introduced but it does not affect existing mechanisms nor does it affect existing tests.
 - 3. A new gas accounting mechanism is introduced and affects existing mechanisms which in turn affect existing tests.
 
-##### State-access ordering within opcode execution
+##### SAO — State-access ordering within opcode execution
 
 Changes *where inside an opcode's execution* state is accessed, or where gas is charged relative to that access. Because a state access is recorded in the block-level access list only if execution had enough gas to reach it, this ordering is consensus-critical: moving it changes the BAL at every gas boundary of every affected opcode.
 
@@ -39,7 +41,7 @@ Changes *where inside an opcode's execution* state is accessed, or where gas is 
 
 *Each boundary must be re-tested against every other dimension that can change the answer (cold/warm, static/non-static, delegated/direct, revert/success), so the case count grows multiplicatively rather than additively. Note this explicitly under Special Considerations.
 
-##### Blob gas accounting changes
+##### BLOB — Blob gas accounting changes
 
 New Blob gas accounting rules which potentially affect pre-existing tests
 
@@ -48,7 +50,7 @@ New Blob gas accounting rules which potentially affect pre-existing tests
 - 2. A new blob gas accounting mechanism is introduced but it does not affect existing mechanisms nor does it affect existing tests.
 - 3. A new blob gas accounting mechanism is introduced and affects existing mechanisms which in turn affect existing tests.
 
-##### State gas accounting changes
+##### SGAS — State gas accounting changes
 
 New state gas accounting rules. State gas is the cost of *writing* state, as opposed to accessing or executing it: `StateGasCosts`, `COST_PER_STATE_BYTE`, the block-level state gas budget, and the spill path into execution gas.
 
@@ -59,7 +61,7 @@ New state gas accounting rules. State gas is the cost of *writing* state, as opp
 
 *Harder to test than blob gas: the spill path means state gas cannot be metered independently of execution gas, and some costs (e.g. `NEW_ACCOUNT`) are state-dependent.
 
-##### New EVM gas refund
+##### RFND — New EVM gas refund
 
 New gas-refund mechanism
 
@@ -68,7 +70,7 @@ New gas-refund mechanism
 - 2. A new complex gas-refund mechanism is introduced or a simple mechanism that affects existing tests or existing gas-refund mechanisms.
 - 3. A new complex gas-refund mechanism is introduced that affects existing tests or existing gas-refund mechanisms.
 
-##### Patterns affecting pre-existing tests
+##### PAT — Patterns affecting pre-existing tests
 
 Implements a new validation mechanism or rule that translates in reworking pre-existing tests
 
@@ -77,7 +79,7 @@ Implements a new validation mechanism or rule that translates in reworking pre-e
 - 2. Considerable subset of existing tests are affected by this change but involves only a contrived category of tests.
 - 3. Major subset of existing tests are affected, including diverse category of tests (benchmarks, static, multiple forks, etc.).
 
-##### New invariant on pre-existing tests
+##### INV — New invariant on pre-existing tests
 
 Tests that are **not about this EIP** must nonetheless assert something this EIP produces. Their logic does not change; they gain a new thing to check.
 
@@ -88,7 +90,7 @@ Tests that are **not about this EIP** must nonetheless assert something this EIP
 
 *Paired with the row above, and easy to confuse with it. "Patterns affecting pre-existing tests" asks whether existing tests must be **reworked**; this row asks whether they must **additionally assert something new**. Score both — an EIP can be low on one and high on the other.
 
-##### Transition-tool interface changes
+##### T8N — Transition-tool interface changes
 
 Modifies or adds new fields to the transition tool interface.
 
@@ -99,7 +101,7 @@ Modifies or adds new fields to the transition tool interface.
 
 *Special consideration must be paid to this section if the EIP introduces a mechanism that requires the state transition tool to be aware whether the block it is processing is the fork-activation block.
 
-##### New test-framework primitives
+##### FWK — New test-framework primitives
 
 Requires new abstractions in the test framework itself — expectation types, modifiers, helpers — beyond writing test functions with what already exists.
 
@@ -108,7 +110,7 @@ Requires new abstractions in the test framework itself — expectation types, mo
 - 2. New expectation or modifier primitives are required, reusable within this EIP's own test suite.
 - 3. New framework-level primitives are required that become a permanent part of the framework and are used by other EIPs' tests.
 
-##### Cryptography
+##### CRYP — Cryptography
 
 Introduces new cryptography mechanisms or modifies existing functionality that involves cryptography
 
@@ -117,7 +119,7 @@ Introduces new cryptography mechanisms or modifies existing functionality that i
 - 2. Multiple new cryptography mechanisms are introduced that are well-known or a single but novel mechanism is introduced that is either untested or has limited resources.
 - 3. Multiple new cryptography mechanisms are introduced and at least one of them is a novel mechanism.
 
-##### Edge/boundary conditions
+##### EDGE — Edge/boundary conditions
 
 Feature contains edge/boundary conditions.
 
@@ -126,7 +128,7 @@ Feature contains edge/boundary conditions.
 - 2. Multiple edge-case or boundary-condition prone mechanisms are introduced, but none of them requires an elevated number of cases to test.
 - 3. Multiple edge-case or boundary-condition prone mechanisms are introduced and at least one of them requires an elevated number of cases to test.
 
-##### Block syncing changes
+##### SYNC — Block syncing changes
 
 Modifies block RLP validation mechanisms that require test client syncing.
 
@@ -135,7 +137,7 @@ Modifies block RLP validation mechanisms that require test client syncing.
 - 2. Multiple simple RLP validation mechanisms are introduced or a single complex one.
 - 3. Multiple RLP validation mechanisms are introduced and at least one of them is deemed complex.
 
-##### Engine API changes
+##### ENG — Engine API changes
 
 Introduces new fields to the Engine API directives
 
@@ -144,7 +146,7 @@ Introduces new fields to the Engine API directives
 - 2. Multiple fields are introduced to one or multiple Engine API end points, or a new Engine API end-point is introduced.
 - 3. Multiple fields are introduced to one or multiple Engine API end points and a new Engine API end-point is introduced.
 
-##### Added system contracts
+##### +SC — Added system contracts
 
 Introduces new system contract, stateful or not
 
@@ -153,7 +155,7 @@ Introduces new system contract, stateful or not
 - 2. Multiple new system contracts are introduced or a single new system contract that is either stateful or triggers a new system action (e.g. requests to the consensus layer).
 - 3. Multiple new system contracts are introduced and at least one of them is either stateful or triggers a new system action (e.g. requests to the consensus layer).
 
-##### Modified system contracts
+##### ~SC — Modified system contracts
 
 Modifies pre-existing system contracts
 
@@ -162,7 +164,7 @@ Modifies pre-existing system contracts
 - 2. Does not directly modify any system contract, but its behavior has major indirect effects on one or more system contracts.
 - 3. At least one pre-existing system contract code or state is modified, which would involve irregular state transition or a similarly complex transition methodology.
 
-##### Added opcodes
+##### +OP — Added opcodes
 
 Introduces new opcodes
 
@@ -173,14 +175,14 @@ Introduces new opcodes
 
 *Cryptography opcodes are not considered complex by default. Refer to the "Cryptography" section for a separate assessment.
 
-##### Modified opcodes
+##### ~OP — Modified opcodes
 
 Modifies pre-existing opcodes
 
 - 0. No pre-existing opcode modifications are introduced.
 - 3. At least one pre-existing opcode's behavior is modified (not including gas changes) or a pre-existing opcode is deprecated.
 
-##### Added precompiles
+##### +PC — Added precompiles
 
 Introduces new precompiles
 
@@ -191,7 +193,7 @@ Introduces new precompiles
 
 *Cryptography precompiles are not considered complex by default. Refer to the "Cryptography" for a separate assessment.
 
-##### Modified precompiles
+##### ~PC — Modified precompiles
 
 Modifies pre-existing precompiles logic or gas-accounting
 
@@ -200,7 +202,7 @@ Modifies pre-existing precompiles logic or gas-accounting
 - 2. Multiple pre-existing precompiles have their gas schedule modified, or a single pre-existing precompile has its behavior modified.
 - 3. The behavior of multiple pre-existing precompiles, or a single complex pre-existing precompile modified.
 
-##### Encoding changes (RLP/SSZ)
+##### ENC — Encoding changes (RLP/SSZ)
 
 Introduces encoding changes at the transaction/block/interfaces level
 
@@ -209,14 +211,14 @@ Introduces encoding changes at the transaction/block/interfaces level
 
 *"Interfaces level" includes the Engine API. Score an Engine API encoding change (e.g. JSON -> SSZ) here.
 
-##### New transaction types
+##### TX — New transaction types
 
 Introduces a new transaction type
 
 - 0. No new transaction types are introduced.
 - 3. A new transaction type is introduced.
 
-##### New or modified transaction validity mechanisms
+##### TXV — New or modified transaction validity mechanisms
 
 Creates new or modifies pre-existing transaction types' validation mechanisms
 
@@ -225,14 +227,14 @@ Creates new or modifies pre-existing transaction types' validation mechanisms
 - 2. Changes to validity rules or intrinsic gas cost calculation affect existing tests, but require only limited updates to test cases and no redesign of the testing infrastructure.
 - 3. Changes to validity rules or intrinsic gas cost calculation require extensive rework or redesign of the tests or testing infrastructure.
 
-##### New block / header fields
+##### HDR — New block / header fields
 
 Introduces new block or block header fields
 
 - 0. No new block or header fields are introduced.
 - 3. A new block or header field is introduced.
 
-##### New fork activation mechanism
+##### FORK — New fork activation mechanism
 
 Modifies state, internal variables, or similar, at the fork activation block
 
@@ -241,7 +243,7 @@ Modifies state, internal variables, or similar, at the fork activation block
 
 *Initialization of new internal variable is not considered a modification.
 
-##### Performance risks
+##### PERF — Performance risks
 
 Introduces or modifies mechanisms and requires performance validation.
 
@@ -250,7 +252,7 @@ Introduces or modifies mechanisms and requires performance validation.
 - 2. The introduced mechanisms cannot be fully benchmarked in isolation, but they only have a limited impact on the existing performance benchmarks.
 - 3. The introduced mechanisms cannot be benchmarked in isolation and have a substantial impact on existing performance benchmarks or have complex interactions with existing mechanisms.
 
-##### Security risks
+##### SEC — Security risks
 
 Introduces or modifies mechanisms that could compromise the security of the chain, users, validators, or other stakeholders, if not implemented properly.
 
@@ -259,7 +261,7 @@ Introduces or modifies mechanisms that could compromise the security of the chai
 - 2. The introduced mechanisms interact with a limited number of existing components, slightly altering their security assumptions and requiring a targeted security review or fuzzing.
 - 3. The introduced mechanisms interact with multiple existing components, including critical ones, substantially altering their security assumptions and requiring an extensive security review and fuzzing.
 
-##### Unspecified behavior requiring cross-client consensus
+##### UNSP — Unspecified behavior requiring cross-client consensus
 
 The EIP text does not determine the answer for cases a test can construct. Clients must agree on a previously unspecified detail before tests can be baselined. The cost here is coordination and re-baselining, not test writing.
 
@@ -270,7 +272,7 @@ The EIP text does not determine the answer for cases a test can construct. Clien
 
 *Score this from the EIP's state at assessment time: whether it has client implementations, whether it has been through a devnet, and how many open questions remain on its discussion thread.
 
-##### Cross-EIP interactions
+##### XEIP — Cross-EIP interactions
 
 Introduces or modifies mechanisms that affect other EIPs in either the same or past forks.
 
@@ -284,36 +286,36 @@ Introduces or modifies mechanisms that affect other EIPs in either the same or p
 
 ### Checklist
 
-| Criterion | Score (0–3) | Rationale |
-|---|---:|---|
-| **EVM Gas rule changes** |   |   |
-| **State-access ordering within opcode execution** |   |   |
-| **Blob gas accounting changes** |   |   |
-| **State gas accounting changes** |   |   |
-| **New EVM gas refund** |   |   |
-| **Patterns affecting pre-existing tests** |   |   |
-| **New invariant on pre-existing tests** |   |   |
-| **Transition-tool interface changes** |   |   |
-| **New test-framework primitives** |   |   |
-| **Cryptography-related testing** |   |   |
-| **Edge/boundary conditions** |   |   |
-| **Block syncing changes** |   |   |
-| **Engine API changes** |   |   |
-| **Added system contracts** |   |   |
-| **Modified system contracts** |   |   |
-| **Added opcodes** |   |   |
-| **Modified opcodes** |   |   |
-| **Added precompiles** |   |   |
-| **Modified precompiles** |   |   |
-| **Encoding changes (RLP/SSZ)** |   |   |
-| **New transaction types** |   |   |
-| **New or modified transaction validity mechanisms** |   |   |
-| **New block / header fields** |   |   |
-| **New fork activation mechanism** |   |   |
-| **Performance risks** |   |   |
-| **Security risks** |   |   |
-| **Unspecified behavior requiring cross-client consensus** |   |   |
-| **Cross-EIP interactions** (uncapped) |   |   |
+| Abbrev. | Criterion | Score (0–3) | Rationale |
+|---|---|---:|---|
+| `GAS` | **EVM Gas rule changes** |   |   |
+| `SAO` | **State-access ordering within opcode execution** |   |   |
+| `BLOB` | **Blob gas accounting changes** |   |   |
+| `SGAS` | **State gas accounting changes** |   |   |
+| `RFND` | **New EVM gas refund** |   |   |
+| `PAT` | **Patterns affecting pre-existing tests** |   |   |
+| `INV` | **New invariant on pre-existing tests** |   |   |
+| `T8N` | **Transition-tool interface changes** |   |   |
+| `FWK` | **New test-framework primitives** |   |   |
+| `CRYP` | **Cryptography** |   |   |
+| `EDGE` | **Edge/boundary conditions** |   |   |
+| `SYNC` | **Block syncing changes** |   |   |
+| `ENG` | **Engine API changes** |   |   |
+| `+SC` | **Added system contracts** |   |   |
+| `~SC` | **Modified system contracts** |   |   |
+| `+OP` | **Added opcodes** |   |   |
+| `~OP` | **Modified opcodes** |   |   |
+| `+PC` | **Added precompiles** |   |   |
+| `~PC` | **Modified precompiles** |   |   |
+| `ENC` | **Encoding changes (RLP/SSZ)** |   |   |
+| `TX` | **New transaction types** |   |   |
+| `TXV` | **New or modified transaction validity mechanisms** |   |   |
+| `HDR` | **New block / header fields** |   |   |
+| `FORK` | **New fork activation mechanism** |   |   |
+| `PERF` | **Performance risks** |   |   |
+| `SEC` | **Security risks** |   |   |
+| `UNSP` | **Unspecified behavior requiring cross-client consensus** |   |   |
+| `XEIP` | **Cross-EIP interactions** (uncapped) |   |   |
 
 **Total: X**
 
