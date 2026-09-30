@@ -12,6 +12,16 @@ TBD
 
 ### Testing
 
+#### Assessment basis
+
+Assess additional execution-layer testing work caused by the target EIP. Include execution-client support for cross-layer changes; exclude changes confined to consensus clients. Complexity describes the required testing work, not the importance of the feature or the number of lines in its specification.
+
+Use the stated base fork plus the changes required by the target as the assessment baseline, including prerequisites proposed for the same fork. Required prerequisites are mechanisms the target specification depends on, whether or not listed in `requires`. “New”, “existing” and “modified” refer to this conditional baseline. Attribute inherited mechanisms and their base testing capabilities to their defining EIPs; count changes and additional regression or interaction tests required by the target. This assessment baseline does not imply an activation order or include unrelated proposals. Scores for related EIPs need not sum to the testing cost of implementing their whole bundle.
+
+Base the assessment on supplied evidence. A dependency reference alone does not establish its behavior. The target’s description of a prerequisite is usable evidence, but does not independently verify that prerequisite. Record supporting sources and material evidence gaps in Rationale. Claims about framework capabilities, client agreement or devnet experience require supporting evidence. Missing evidence is neither a score of 0 nor a reason for a high score.
+
+Describe the concrete rule, validation boundary or test family affected. A test family groups cases exercising the same protocol behavior; fixtures differing only in parameters are not separate families. “Existing tests” means tests needed for the conditional baseline, not an assertion that particular test files exist.
+
 #### Criteria
 
 All criteria are scored on a 0–3 scale. A score of 4 may be used in exceptional circumstances where the complexity or impact exceeds the defined criteria.
@@ -326,6 +336,8 @@ Introduces or modifies mechanisms that affect other EIPs in either the same or p
 #### Notes
 
 > Evaluator notes that do not affect the score but are valid points that must be taken into consideration when the tests are being written.
+
+Record the assessed EIP revision, template revision, base fork, required prerequisites, supporting sources and material assumptions. For automated assessments, also record the model and evaluator-instruction versions. Assessments using different evidence or baselines are not directly interchangeable.
 
 #### Final Assessment
 
