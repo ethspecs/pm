@@ -1,6 +1,6 @@
 # EIP-NNNN: EIP Title
 
-Checklist revision: **2** (28 criteria) — see [Revision Notes](#revision-notes)
+Checklist revision: **3** (28 criteria) — see [Revision Notes](#revision-notes)
 
 Link: https://eips.ethereum.org/EIPS/eip-NNNN
 
@@ -377,6 +377,10 @@ Record the assessed EIP revision, template revision, base fork, required prerequ
 > definitions above are self-contained. Record the revision a completed
 > assessment was scored against at the top of the document; **scores are not
 > comparable across revisions**, so re-score rather than compare.
+
+###### Revision 3 — 28 criteria, nominal 0–84
+
+Revision 3 aims to disambiguate the assessment criteria to improve the consistency and quality of results from AI tooling, while keeping the template usable for human assessment. It clarifies assessment scope, prerequisite attribution and evidence requirements, and revises individual criterion definitions. Encoding includes schema changes within existing formats and protocol account/state records. Cross-EIP work includes target-specific combinations with unchanged rules; inherited base tests alone do not count. Unspecified behavior concerns unresolved normative outcomes, rather than inferred implementation or devnet maturity. These scope choices can change scores even though numeric options and tier boundaries are retained. Scores are not directly interchangeable with earlier revisions.
 
 ###### Revision 2 — 28 criteria, nominal 0–84
 
