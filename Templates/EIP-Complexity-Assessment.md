@@ -276,6 +276,8 @@ Requires performance validation of additional or changed EL workloads. Name the 
 - 2. Targeted integrated benchmarks are needed for a bounded interaction, even if part of the mechanism can also be benchmarked alone.
 - 3. New resource coupling or adversarial workload combinations require integrated stress testing across distinct execution/client subsystems; identify the affected assumptions.
 
+*Changes to gas costs or resource limits can require renewed benchmarking of existing workloads even when the underlying mechanisms are unchanged. Score the validation required by the changed workload capacity or resource bound; exclude the prerequisite's original benchmarking effort.
+
 ##### SEC — Security risks
 
 Requires validation of new or changed security invariants or failure modes. Name what the target changes and the affected boundary. Every implementation can contain bugs; that fact alone is not a scoring condition.
