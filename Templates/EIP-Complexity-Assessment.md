@@ -182,6 +182,8 @@ Changes an existing protocol-designated contract's rules, required code or state
 
 *A direct change does not automatically imply an activation migration. Assess activation-specific work separately.
 
+*Deploying a newly introduced system contract is not modifying an existing one, including when code is installed at an already-existing account with empty code and storage. Assess that deployment under Added system contracts and any activation-specific work under New fork activation mechanism. Changes to a system contract already present in the prerequisite baseline still count here.
+
 ##### +OP — Added opcodes
 
 Introduces previously undefined EVM instructions. Simple means no immediate data, fixed stack effects and constant gas; an instruction lacking any of these properties is complex. A prerequisite's instruction already exists in the baseline.
