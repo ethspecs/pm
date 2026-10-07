@@ -1,6 +1,6 @@
 # EIP-NNNN: EIP Title
 
-Checklist revision: **2** (28 anchors) — see [Revision Notes](#revision-notes)
+Checklist revision: **3** (28 criteria) — see [Revision Notes](#revision-notes)
 
 Link: https://eips.ethereum.org/EIPS/eip-NNNN
 
@@ -12,308 +12,341 @@ TBD
 
 ### Testing
 
-#### Anchors
+#### Assessment basis
 
-All anchors are scored on a 0–3 scale. A score of 4 may be used in exceptional circumstances where the complexity or impact exceeds the defined anchors.
+Assess additional execution-layer testing work caused by the target EIP. Include execution-client support for cross-layer changes; exclude changes confined to consensus clients. Complexity describes the required testing work, not the importance of the feature or the number of lines in its specification.
 
-##### EVM Gas rule changes
+Use the stated base fork plus the changes required by the target as the assessment baseline, including prerequisites proposed for the same fork. Required prerequisites are mechanisms the target specification depends on, whether or not listed in `requires`. “New”, “existing” and “modified” refer to this conditional baseline. Attribute inherited mechanisms and their base testing capabilities to their defining EIPs; count changes and additional regression or interaction tests required by the target. This assessment baseline does not imply an activation order or include unrelated proposals. Scores for related EIPs need not sum to the testing cost of implementing their whole bundle.
 
-New EVM gas accounting rules
-- 0. No gas accounting changes.
-- 1. Existing gas accounting mechanism is updated.
-- 2. A new gas accounting mechanism is introduced but it does not affect existing mechanisms nor does it affect existing tests.
-- 3. A new gas accounting mechanism is introduced and affects existing mechanisms which in turn affect existing tests.
+Base the assessment on supplied evidence. A dependency reference alone does not establish its behavior. The target’s description of a prerequisite is usable evidence, but does not independently verify that prerequisite. Record supporting sources and material evidence gaps in Rationale. Claims about framework capabilities, client agreement or devnet experience require supporting evidence. Missing evidence is neither a score of 0 nor a reason for a high score.
 
-##### State-access ordering within opcode execution
+Describe the concrete rule, validation boundary or test family affected. A test family groups cases exercising the same protocol behavior; fixtures differing only in parameters are not separate families. “Existing tests” means tests needed for the conditional baseline, not an assertion that particular test files exist.
 
-Changes *where inside an opcode's execution* state is accessed, or where gas is charged relative to that access. Because a state access is recorded in the block-level access list only if execution had enough gas to reach it, this ordering is consensus-critical: moving it changes the BAL at every gas boundary of every affected opcode.
+#### Criteria
 
-- 0. No change to where state is accessed, or to where gas is charged relative to a state access, within any opcode.
-- 1. A single opcode's state-access or gas-charge ordering changes.
-- 2. Multiple opcodes' ordering changes, or a new state-accessing operation is introduced whose position in the order must be settled.
-- 3. The ordering rule changes for a whole class of state-accessing opcodes at once, or what counts as a recordable state access is redefined — requiring existing BAL vectors to be re-derived across opcodes and forks.
+All criteria are scored on a 0–3 scale. Use only the levels listed for each criterion. A score of 4 may be used in exceptional circumstances only when the criterion's level-3 condition applies and supplied evidence establishes additional testing work beyond that condition within this same criterion.
 
-*Distinct from "Modified opcodes", which asks whether an opcode's **result** changed. This row asks about the **path to the result**, which is observable even when the result is identical. An EIP can be 0 on that row and 3 on this one.
+Choose the highest level whose full definition is supported. Do not use 4 for uncertainty, missing evidence, the prerequisite's complexity, or an unrelated risk.
 
-*Score changes **to** the ordering. Do not score the fact that state accesses are observable — they always are.
+In the abbreviations below, `+` means added and `~` means modified.
 
-*Each boundary must be re-tested against every other dimension that can change the answer (cold/warm, static/non-static, delegated/direct, revert/success), so the case count grows multiplicatively rather than additively. Note this explicitly under Special Considerations.
+##### GAS — EVM Gas rule changes
 
-##### Blob gas accounting changes
+Changes execution-gas charging, metering, limits or settlement. A mechanism is an accounting rule, not an ordinary contract fee or use of an existing instruction. State and blob gas have separate criteria.
+- 0. No execution-gas accounting rule changes.
+- 1. Existing accounting rules or parameters change without introducing a new accounting mechanism.
+- 2. A new accounting mechanism is added without changing existing accounting rules or the expected gas results of baseline operations.
+- 3. A new accounting mechanism also changes existing accounting rules or the expected gas results of baseline operations.
 
-New Blob gas accounting rules which potentially affect pre-existing tests
+##### SAO — State-access ordering within opcode execution
 
-- 0. No blob gas accounting changes.
-- 1. Existing blob gas accounting mechanism is updated.
-- 2. A new blob gas accounting mechanism is introduced but it does not affect existing mechanisms nor does it affect existing tests.
-- 3. A new blob gas accounting mechanism is introduced and affects existing mechanisms which in turn affect existing tests.
+Changes when an instruction accesses state or charges gas relative to that access, including which accesses enter the block-level access list. Count changed ordering, not the mere presence of state access.
 
-##### State gas accounting changes
+- 0. No instruction's state-access or gas-charge ordering changes, and no new ordering rule is introduced.
+- 1. Ordering changes for exactly one existing opcode, without a general rule change.
+- 2. Ordering changes for multiple opcodes, or a new state-accessing operation needs an ordering rule, without meeting level 3.
+- 3. A common ordering rule changes for an entire opcode class, or the definition of a recordable access changes across operations, requiring baseline access-list expectations to be revised.
 
-New state gas accounting rules. State gas is the cost of *writing* state, as opposed to accessing or executing it: `StateGasCosts`, `COST_PER_STATE_BYTE`, the block-level state gas budget, and the spill path into execution gas.
+*Changed precompile or contract internals do not modify an instruction's ordering unless the instruction's own specified sequence changes. Record relevant combinations such as cold/warm, static/non-static and revert/success; do not assume every combination applies. Record multiplicative growth across applicable combinations under Special Considerations.
 
-- 0. No state gas accounting changes.
-- 1. An existing state gas cost or `STATE_BYTES_PER_*` rate is adjusted.
-- 2. A new state-gas-charging site is introduced, or the block-level state gas budget or reservoir allocation is modified.
-- 3. A new state gas charging mechanism is introduced, or the spill interaction between state gas and execution gas is modified, affecting existing gas tests.
+##### BLOB — Blob gas accounting changes
 
-*Harder to test than blob gas: the spill path means state gas cannot be metered independently of execution gas, and some costs (e.g. `NEW_ACCOUNT`) are state-dependent.
+Changes blob-gas charging, pricing, limits or settlement. Carrying existing blobs or changing blob-related validity checks alone does not change accounting.
 
-##### New EVM gas refund
+- 0. No blob-gas accounting rule changes.
+- 1. Existing accounting rules or parameters change without introducing a new mechanism.
+- 2. A new mechanism is added without changing existing accounting rules or baseline gas expectations.
+- 3. A new mechanism also changes existing accounting rules or baseline gas expectations.
 
-New gas-refund mechanism
+##### SGAS — State gas accounting changes
 
-- 0. No new gas-refund mechanisms are introduced.
-- 1. A new simple gas-refund mechanism is introduced that does not affect either existing tests or existing gas-refund mechanisms.
-- 2. A new complex gas-refund mechanism is introduced or a simple mechanism that affects existing tests or existing gas-refund mechanisms.
-- 3. A new complex gas-refund mechanism is introduced that affects existing tests or existing gas-refund mechanisms.
+Changes protocol accounting for writing state, including state-byte costs, state-gas budgets and spill into execution gas. Using an unchanged state-writing operation does not introduce accounting. State-access charges, including cold/warm access, and block-access-list data-size charges alone belong under EVM Gas rule changes, not state gas accounting.
 
-##### Patterns affecting pre-existing tests
+- 0. No state-gas accounting rule changes.
+- 1. Only existing cost parameters or state-byte rates change.
+- 2. Charging is added at a new site using an existing mechanism, or budget/reservoir allocation changes, without meeting level 3.
+- 3. A new state-gas charging mechanism is introduced, or spill between state and execution gas changes baseline accounting expectations.
 
-Implements a new validation mechanism or rule that translates in reworking pre-existing tests
+##### RFND — New EVM gas refund
 
-- 0. No pre-existing tests are affected by this change.
-- 1. Minor subset of existing tests are affected by this change.
-- 2. Considerable subset of existing tests are affected by this change but involves only a contrived category of tests.
-- 3. Major subset of existing tests are affected, including diverse category of tests (benchmarks, static, multiple forks, etc.).
+Introduces an additional protocol refund mechanism. “Simple” means one local trigger without history-dependent eligibility or interaction with other refund rules; other mechanisms are complex. Repricing or removing an existing refund belongs under EVM Gas rule changes.
 
-##### New invariant on pre-existing tests
+- 0. No new refund mechanism is introduced.
+- 1. All new refund mechanisms are simple and leave existing refund rules and baseline expectations unchanged.
+- 2. A complex mechanism is added without changing baseline refund behavior, or only simple mechanisms are added but change that behavior.
+- 3. A complex mechanism is added and changes existing refund rules or baseline refund expectations.
 
-Tests that are **not about this EIP** must nonetheless assert something this EIP produces. Their logic does not change; they gain a new thing to check.
+##### PAT — Patterns affecting pre-existing tests
 
-- 0. Pre-existing tests assert nothing new.
-- 1. A narrow, contrived category of pre-existing tests gains a new assertion.
-- 2. A broad category gains a new assertion, applied mechanically.
-- 3. Every test in the fork gains the assertion regardless of what it tests, and pre-fork vectors must be re-derived to satisfy it.
+Baseline tests need changed inputs, execution steps or expected results because of the target. Exclude the work of constructing prerequisite test suites, new tests solely for the added feature, and merely appending an assertion.
 
-*Paired with the row above, and easy to confuse with it. "Patterns affecting pre-existing tests" asks whether existing tests must be **reworked**; this row asks whether they must **additionally assert something new**. Score both — an EIP can be low on one and high on the other.
+- 0. No baseline test behavior needs reworking.
+- 1. Rework is confined to particular parameter or boundary cases within one behavioral family.
+- 2. Rework affects ordinary cases throughout one family, or localized cases in several families, without a common rewrite across families.
+- 3. A common change requires reworking ordinary cases across distinct behavioral families; identify the changed rule and affected families.
 
-##### Transition-tool interface changes
+*Estimate required behavioral coverage from the specification. Do not claim measured test counts without a supplied suite.
 
-Modifies or adds new fields to the transition tool interface.
+##### INV — New invariant on pre-existing tests
 
-- 0. No modifications to the transition tool interface are required.
-- 1. A single new field needs to be introduced to the transition tool interface.
-- 2. Multiple new fields or a new mechanism has to be introduced to the transition tool interface.
-- 3. Multiple new fields and a new mechanism has to be introduced to the transition tool interface.
+Baseline tests must additionally check an output that did not exist before the target, such as a new log, header or receipt field, block commitment or protocol-mandated storage write produced while they run. Changed gas costs, limits or existing expected values are rework under Patterns affecting pre-existing tests, not a new assertion. Attribute an assertion introduced by a prerequisite to that prerequisite.
 
-*Special consideration must be paid to this section if the EIP introduces a mechanism that requires the state transition tool to be aware whether the block it is processing is the fork-activation block.
+- 0. Baseline tests need no additional assertion.
+- 1. Only a restricted parameter or boundary subset within one family needs the assertion.
+- 2. Ordinary cases across one or more families need the assertion, but level 3 is not met.
+- 3. Every test in the target fork needs the assertion regardless of its subject, and pre-fork vectors must also be re-derived; both requirements need evidence.
 
-##### New test-framework primitives
+*A universal assertion without pre-fork vector changes is level 2.
 
-Requires new abstractions in the test framework itself — expectation types, modifiers, helpers — beyond writing test functions with what already exists.
+##### T8N — Transition-tool interface changes
 
-- 0. Existing test primitives suffice.
-- 1. Existing primitives need minor extension.
-- 2. New expectation or modifier primitives are required, reusable within this EIP's own test suite.
-- 3. New framework-level primitives are required that become a permanent part of the framework and are used by other EIPs' tests.
+Changes the execution state-transition tool's inputs, outputs or invocation protocol. Count distinct semantic fields, not repeated schema occurrences. A new mechanism changes the tool's operation or exchange sequence beyond passing ordinary fields.
 
-##### Cryptography
+- 0. No transition-tool interface change is required.
+- 1. Exactly one field is added, removed or semantically changed, without a new mechanism.
+- 2. Multiple fields change without a new mechanism, or a new mechanism is required with at most one changed field.
+- 3. A new mechanism and multiple changed fields are both required.
 
-Introduces new cryptography mechanisms or modifies existing functionality that involves cryptography
+*Fork-aware behavior counts here only if it requires an interface change. Actual interface reuse needs supplied tool evidence.
 
-- 0. No cryptography mechanisms are introduced.
-- 1. A new cryptography mechanism is introduced but it is a well known mechanism that is known to have vast resources to aid on its testing.
-- 2. Multiple new cryptography mechanisms are introduced that are well-known or a single but novel mechanism is introduced that is either untested or has limited resources.
-- 3. Multiple new cryptography mechanisms are introduced and at least one of them is a novel mechanism.
+##### FWK — New test-framework primitives
 
-##### Edge/boundary conditions
+Requires additional framework capabilities beyond those needed for the prerequisites. A new test, vector, contract or parameter value alone is not a new primitive. Assess architectural necessity without assuming actual helper availability.
 
-Feature contains edge/boundary conditions.
+- 0. No additional abstraction is required beyond baseline primitives.
+- 1. An existing kind of primitive needs a local extension, without a new abstraction.
+- 2. A new expectation, modifier or construction abstraction is required within the target's test suite, without meeting level 3.
+- 3. The target requires a shared framework representation or execution facility that also changes how other behavioral families are constructed or checked; hypothetical future reuse is insufficient.
 
-- 0. No discernible edge cases or boundary conditions are introduced.
-- 1. A single edge-case or boundary-condition prone mechanism is introduced.
-- 2. Multiple edge-case or boundary-condition prone mechanisms are introduced, but none of them requires an elevated number of cases to test.
-- 3. Multiple edge-case or boundary-condition prone mechanisms are introduced and at least one of them requires an elevated number of cases to test.
+##### CRYP — Cryptography
 
-##### Block syncing changes
+Introduces or changes cryptographic verification, signing, hashing or proof rules executed by the EL. Reusing an unchanged primitive and protocol validation rule is not another mechanism. An established mechanism needs supplied evidence of applicable specifications and test resources; unfamiliarity is not novelty.
 
-Modifies block RLP validation mechanisms that require test client syncing.
+- 0. No cryptographic mechanism or cryptographic validation rule changes.
+- 1. Exactly one established mechanism is added or changed, with applicable test resources evidenced.
+- 2. Multiple mechanisms are added or changed and all are established with applicable resources, or exactly one mechanism is added or changed and requires validation beyond established resources.
+- 3. Multiple mechanisms are added or changed and at least one requires cryptographic validation beyond established resources.
 
-- 0. No new RLP validation mechanism is introduced.
-- 1. A single simple RLP validation mechanism is introduced.
-- 2. Multiple simple RLP validation mechanisms are introduced or a single complex one.
-- 3. Multiple RLP validation mechanisms are introduced and at least one of them is deemed complex.
+*Changed message bytes using unchanged hashing/signing rules alone belong to encoding or validity testing. Missing information about resources is an evidence gap, not proof of novelty.
 
-##### Engine API changes
+##### EDGE — Edge/boundary conditions
 
-Introduces new fields to the Engine API directives
+Count independent changed rules with boundary-sensitive outcomes, not individual boundary values. An elevated matrix means interacting dimensions whose combinations change the result and cannot be tested independently.
 
-- 0. No new fields or communication mechanisms are introduced to the Engine API.
-- 1. A single new field is introduced in one of the Engine API endpoints.
-- 2. Multiple fields are introduced to one or multiple Engine API end points, or a new Engine API end-point is introduced.
-- 3. Multiple fields are introduced to one or multiple Engine API end points and a new Engine API end-point is introduced.
+- 0. No new or changed boundary-sensitive rule is identified.
+- 1. Exactly one boundary-sensitive mechanism changes or is introduced.
+- 2. Multiple boundary-sensitive mechanisms change or are introduced, with no elevated matrix.
+- 3. Multiple boundary-sensitive mechanisms change or are introduced and at least one has an elevated matrix; identify its interacting dimensions.
 
-##### Added system contracts
+*A single boundary-sensitive mechanism remains level 1 even with an elevated matrix; it does not meet the level-3 prerequisite for exceptional 4. Record unusually broad combinations under Special Considerations.
 
-Introduces new system contract, stateful or not
+##### SYNC — Block syncing changes
 
-- 0. No new system contracts are introduced.
-- 1. A new system contract is introduced that is not stateful nor does it trigger a new system action (e.g. requests to the consensus layer).
-- 2. Multiple new system contracts are introduced or a single new system contract that is either stateful or triggers a new system action (e.g. requests to the consensus layer).
-- 3. Multiple new system contracts are introduced and at least one of them is either stateful or triggers a new system action (e.g. requests to the consensus layer).
+Changes execution-block RLP decoding or structural validation that must be tested through block import/sync. Other synchronization work is outside this criterion. Simple checks validate one field locally; complex checks depend on other fields, blocks or state.
 
-##### Modified system contracts
+- 0. No execution-block RLP decoding or structural validation rule changes.
+- 1. Exactly one simple validation rule is added or changed.
+- 2. Multiple simple rules change, or exactly one complex rule changes.
+- 3. Multiple rules change and at least one is complex.
 
-Modifies pre-existing system contracts
+*Exclude mempool gossip, CL-only sync and optional indexing. Ordinary execution-rule changes alone do not satisfy this criterion.
 
-- 0. No modifications to pre-existing system contracts are introduced, directly or indirectly.
-- 1. Does not directly modify any system contract, but its behavior has minor indirect effects on one or more system contracts.
-- 2. Does not directly modify any system contract, but its behavior has major indirect effects on one or more system contracts.
-- 3. At least one pre-existing system contract code or state is modified, which would involve irregular state transition or a similarly complex transition methodology.
+##### ENG — Engine API changes
 
-##### Added opcodes
+Changes the EL/CL Engine API contract. Count distinct semantic fields once even when repeated across methods. A new versioned method counts as an endpoint; changing a field's type or meaning counts as a field change. Exclude public JSON-RPC, transition-tool and application APIs.
 
-Introduces new opcodes
+- 0. No Engine API field or endpoint changes.
+- 1. Exactly one field changes, without adding or changing endpoint behavior beyond that field.
+- 2. Multiple fields change without an endpoint-level change, or endpoint behavior changes with at most one field change.
+- 3. Endpoint behavior and multiple fields both change.
 
-- 0. No new opcodes are introduced.
-- 1. A new simple opcode is introduced (no data portion, no complex stack mechanics, and a constant gas cost).
-- 2. Multiple new simple opcodes are introduced, or a single new complex opcode is introduced (has data portion, or complex stack mechanics, or a dynamic gas cost).
-- 3. Multiple new opcodes are introduced, and at least one of them is complex (has data portion, or complex stack mechanics, or a dynamic gas cost).
+*Endpoint-level changes include adding/removing a method or changing its exchange or response-status rules, beyond ordinary field changes.
 
-*Cryptography opcodes are not considered complex by default. Refer to the "Cryptography" section for a separate assessment.
+##### +SC — Added system contracts
 
-##### Modified opcodes
+Introduces protocol-designated EVM contracts, counted by distinct protocol-designated deployments, including addresses still TBD. Exclude native precompiles and ordinary application contracts. “Stateful” means persistent storage; a “system action” is a protocol effect beyond the ordinary call result, such as an execution request.
 
-Modifies pre-existing opcodes
+- 0. No system contract is introduced beyond the prerequisites.
+- 1. Exactly one stateless contract is introduced, without a new system action.
+- 2. Multiple stateless contracts without system actions are introduced, or exactly one contract is introduced that is stateful or triggers a system action.
+- 3. Multiple contracts are introduced and at least one is stateful or triggers a system action.
 
-- 0. No pre-existing opcode modifications are introduced.
-- 3. At least one pre-existing opcode's behavior is modified (not including gas changes) or a pre-existing opcode is deprecated.
+##### ~SC — Modified system contracts
 
-##### Added precompiles
+Changes an existing protocol-designated contract's rules, required code or state layout, or the protocol behavior around it. Ordinary writes under unchanged contract rules are not modifications. Exclude native precompiles and application contracts.
 
-Introduces new precompiles
+- 0. No existing system contract's rules or surrounding protocol behavior change.
+- 1. Contract rules stay unchanged, but one local input or output convention changes indirectly.
+- 2. Contract rules stay unchanged, but indirect changes alter sequencing, state assumptions or interactions beyond one local convention.
+- 3. An existing contract's specified behavior, required code, storage layout or protocol-mandated state changes directly.
 
-- 0. No new precompiles are introduced.
-- 1. A new simple precompile is introduced (constant input length, constant gas cost).
-- 2. Multiple new simple precompiles are introduced, or a single new complex precompile is introduced (dynamic input length or dynamic gas cost).
-- 3. Multiple new precompiles are introduced, and at least one of them is complex (dynamic input length or dynamic gas cost).
+*A direct change does not automatically imply an activation migration. Assess activation-specific work separately.
 
-*Cryptography precompiles are not considered complex by default. Refer to the "Cryptography" for a separate assessment.
+*Deploying a newly introduced system contract is not modifying an existing one, including when code is installed at an already-existing account with empty code and storage. Assess that deployment under Added system contracts and any activation-specific work under New fork activation mechanism. Changes to a system contract already present in the prerequisite baseline still count here.
 
-##### Modified precompiles
+##### +OP — Added opcodes
 
-Modifies pre-existing precompiles logic or gas-accounting
+Introduces previously undefined EVM instructions. Simple means no immediate data, fixed stack effects and constant gas; an instruction lacking any of these properties is complex. A prerequisite's instruction already exists in the baseline.
 
-- 0. No pre-existing precompiles are modified.
-- 1. At least one pre-existing precompile has its gas schedule modified.
-- 2. Multiple pre-existing precompiles have their gas schedule modified, or a single pre-existing precompile has its behavior modified.
-- 3. The behavior of multiple pre-existing precompiles, or a single complex pre-existing precompile modified.
+- 0. No new instruction is introduced.
+- 1. Exactly one simple instruction is introduced.
+- 2. Multiple simple instructions are introduced, or exactly one complex instruction.
+- 3. Multiple instructions are introduced and at least one is complex.
 
-##### Encoding changes (RLP/SSZ)
+*Contract bytecode, transaction frames and new introspection selector values are not new opcodes. Replacing an existing instruction's semantics belongs under Modified opcodes. Cryptography alone does not determine this criterion's complexity.
 
-Introduces encoding changes at the transaction/block/interfaces level
+##### ~OP — Modified opcodes
 
-- 0. No encoding changes are introduced at the transaction, block, or interfaces levels.
-- 3. An encoding change is introduced at transaction, block or interfaces level (e.g. RLP -> SSZ).
+Changes an existing EVM instruction's semantics or availability, including an instruction defined by a same-fork prerequisite. Semantics include stack, memory/state effects, emitted logs, control flow, return values and exceptional halts.
 
-*"Interfaces level" includes the Engine API. Score an Engine API encoding change (e.g. JSON -> SSZ) here.
+- 0. No instruction's specified semantics or availability changes. Gas-only changes, access ordering alone, and changed callee or precompile behavior through an unchanged instruction do not count.
+- 3. At least one instruction's specified semantics or availability changes beyond gas-only or access-ordering changes, or an existing instruction is deprecated.
 
-##### New transaction types
+*New selector behavior within an existing introspection instruction is a modification. Merely calling new contract code is not.
 
-Introduces a new transaction type
+##### +PC — Added precompiles
 
-- 0. No new transaction types are introduced.
-- 3. A new transaction type is introduced.
+Introduces native execution functions at protocol-defined precompile addresses. Count distinct addresses. Simple means fixed supported input length and constant gas; variable supported input length or dynamic gas makes a precompile complex.
 
-##### New or modified transaction validity mechanisms
+- 0. No new precompile is introduced.
+- 1. Exactly one simple precompile is introduced.
+- 2. Multiple simple precompiles are introduced, or exactly one complex precompile.
+- 3. Multiple precompiles are introduced and at least one is complex.
 
-Creates new or modifies pre-existing transaction types' validation mechanisms
+*Exclude EVM system contracts. Cryptography alone does not determine this criterion's complexity.
 
-- 0. No changes are introduced to the validity rules of existing transaction types or to their intrinsic gas cost calculation.
-- 1. Minor adjustments are introduced to validity rules or intrinsic gas cost calculation, but they do not significantly affect existing tests.
-- 2. Changes to validity rules or intrinsic gas cost calculation affect existing tests, but require only limited updates to test cases and no redesign of the testing infrastructure.
-- 3. Changes to validity rules or intrinsic gas cost calculation require extensive rework or redesign of the tests or testing infrastructure.
+##### ~PC — Modified precompiles
 
-##### New block / header fields
+Changes existing precompile semantics or gas schedules. For this criterion, complex means variable supported input length or dynamic gas before or after the change. Behavior means outputs, accepted inputs or failure rules beyond gas alone.
 
-Introduces new block or block header fields
+- 0. No existing precompile's semantics or gas schedule changes.
+- 1. Exactly one precompile has a gas-only change, and none has a behavior change.
+- 2. Multiple precompiles have gas-only changes and none has a behavior change, or exactly one simple precompile has a behavior change and no other precompile has a behavior change.
+- 3. Multiple precompiles have behavior changes, or at least one complex precompile has a behavior change.
 
-- 0. No new block or header fields are introduced.
-- 3. A new block or header field is introduced.
+##### ENC — Encoding changes (RLP/SSZ)
 
-##### New fork activation mechanism
+Changes a serialized schema or codec for EL transactions, blocks/headers, receipts, execution requests, protocol account/state-trie records, Engine API, execution-client peer messages or protocol-specified EL proof interfaces. RLP/SSZ are examples, not an exhaustive codec list.
 
-Modifies state, internal variables, or similar, at the fork activation block
+- 0. No schema or codec changes in those objects/interfaces. New values within unchanged schemas, ordinary contract calldata/storage layouts and CL-only containers do not count.
+- 3. At least one listed object/interface gains or changes a serialized field, format or codec, including a new request payload schema within an existing request-type scheme.
 
-- 0. No state modifications, internal variables or similar are modified at the fork activation block.
-- 3. Either a state modification or internal variables are modified at the fork activation block.
+*Name the object and schema change. Retaining RLP, SSZ or JSON does not exclude a schema change. This can overlap a transaction, header or API criterion because it measures separate serialization work.
 
-*Initialization of new internal variable is not considered a modification.
+##### TX — New transaction types
 
-##### Performance risks
+Introduces a distinct EL transaction envelope accepted in an execution block's transaction list. In the typed scheme, this means an EIP-2718 type with its own payload definition and allocated or proposed discriminator; a TBD type byte still counts.
 
-Introduces or modifies mechanisms and requires performance validation.
+- 0. No new EL transaction envelope is introduced. Execution-request types, contract calls/calldata, CL operations, system calls and inner transaction frames do not count; modifying an existing type does not itself introduce one.
+- 3. At least one distinct EL transaction envelope is introduced beyond the prerequisites, with its own payload definition and transaction-type discriminator, allocated or proposed.
 
-- 0. No new mechanisms are introduced that require performance validation.
-- 1. The introduced mechanisms can be benchmarked in isolation and do not affect existing performance behavior.
-- 2. The introduced mechanisms cannot be fully benchmarked in isolation, but they only have a limited impact on the existing performance benchmarks.
-- 3. The introduced mechanisms cannot be benchmarked in isolation and have a substantial impact on existing performance benchmarks or have complex interactions with existing mechanisms.
+##### TXV — New or modified transaction validity mechanisms
 
-##### Security risks
+Changes consensus rules determining transaction eligibility in an execution block, including intrinsic gas and rules for new types. Exclude public-mempool policy alone, application-level reverts, precompile outputs and CL request acceptance.
 
-Introduces or modifies mechanisms that could compromise the security of the chain, users, validators, or other stakeholders, if not implemented properly.
+- 0. No consensus transaction-validity or intrinsic-gas rule changes.
+- 1. Only a local parameter, bound or existing condition changes, without introducing a new validation dependency or sequence.
+- 2. New or changed validation rules require dedicated cases or local test extensions, while baseline validation sequencing and test construction remain usable.
+- 3. Validation changes require restructuring shared test construction, validation sequencing or coordinated transaction/state scenarios beyond local cases; identify the required restructuring.
 
-- 0. No new mechanisms are introduced that could pose a security risk.
-- 1. The introduced mechanisms are self-contained, can be validated in isolation, and do not alter existing invariants that could pose a security risk for any stakeholders.
-- 2. The introduced mechanisms interact with a limited number of existing components, slightly altering their security assumptions and requiring a targeted security review or fuzzing.
-- 3. The introduced mechanisms interact with multiple existing components, including critical ones, substantially altering their security assumptions and requiring an extensive security review and fuzzing.
+*Inherited validation is not introduced again. A new condition alone does not establish framework redesign. A consensus rule change can require extensive work even when its textual delta is short.
 
-##### Unspecified behavior requiring cross-client consensus
+##### HDR — New block / header fields
 
-The EIP text does not determine the answer for cases a test can construct. Clients must agree on a previously unspecified detail before tests can be baselined. The cost here is coordination and re-baselining, not test writing.
+Adds an EL block-level or execution-header schema member that clients must read, produce or validate. Count a field where its owning schema is defined.
 
-- 0. The EIP text determines the answer for every case a test could construct.
-- 1. A few details are unspecified but have an obvious intended reading.
-- 2. Details require client agreement before tests can be written, but they are localized.
-- 3. A previously unspecified *and previously unobservable* behavior becomes consensus-critical; expect tests to be re-baselined on each round of EIP amendment.
+- 0. No EL block-level or execution-header member is added. Changed field values/meanings, list entries, transaction/request payload fields, CL-only fields and API-only fields do not count.
+- 3. At least one EL block-level or execution-header member is added; identify its containing schema.
 
-*Score this from the EIP's state at assessment time: whether it has client implementations, whether it has been through a devnet, and how many open questions remain on its discussion thread.
+*An additional request type under an existing requests commitment is not another header field. An Engine API field counts here only when its corresponding EL block/header member is also added.
 
-##### Cross-EIP interactions
+##### FORK — New fork activation mechanism
 
-Introduces or modifies mechanisms that affect other EIPs in either the same or past forks.
+Requires an activation-specific EL transition: one-time migration/reset/conversion of persistent state, or protocol-mandated installation/replacement of account code or storage. A conditional prerequisite baseline does not imply earlier activation.
 
-- 0. Fully self-contained EIP that does not depend on, modify, or conflict with any other EIP.
-- 1. The EIP interacts with one or more other EIPs in a non-critical and limited way but can be tested independently for the most part.
-- 2. The EIP depends on or modifies one or more other EIPs such that coordinated testing and consideration is required, but interactions are limited in scope and not complex.
-- 3. The EIP has strong interdependencies with multiple EIPs, requiring extensive coordinated cross-EIP testing as well as potential re-design of existing test vectors.
-- **+1 for every 3 additional interacting EIPs beyond the first 3**, each of which requires its own coordinated test cases. List the EIPs in the rationale.
+- 0. No activation-specific EL transition is required. Rule/constant selection, new internal bookkeeping, ordinary deployment transactions and starting recurring block processing alone do not count.
+- 3. At least one activation-specific EL state transition is required; identify the operation that differs from ordinary post-fork processing.
 
-*This row is intentionally uncapped, unlike every other anchor: each interacting EIP is another axis of the test matrix, so a ceiling would make a 12-EIP product indistinguishable from a 3-EIP one.
+*A one-time conversion of pre-fork state can count when embedded in a recurring system call. New-account installation mandated at activation counts. CL-only transitions do not.
+
+##### PERF — Performance risks
+
+Requires performance validation of additional or changed EL workloads. Name the resource and changed bound or interaction. The prerequisite's cost or generic concern about denial of service is insufficient.
+
+- 0. No additional performance-validation requirement is established by the change.
+- 1. Component benchmarks cover the changed workload without changing baseline end-to-end performance assumptions.
+- 2. Targeted integrated benchmarks are needed for a bounded interaction, even if part of the mechanism can also be benchmarked alone.
+- 3. New resource coupling or adversarial workload combinations require integrated stress testing across distinct execution/client subsystems; identify the affected assumptions.
+
+*Changes to gas costs or resource limits can require renewed benchmarking of existing workloads even when the underlying mechanisms are unchanged. Score the validation required by the changed workload capacity or resource bound; exclude the prerequisite's original benchmarking effort.
+
+##### SEC — Security risks
+
+Requires validation of new or changed security invariants or failure modes. Name what the target changes and the affected boundary. Every implementation can contain bugs; that fact alone is not a scoring condition.
+
+- 0. No additional security-sensitive rule or validation boundary is introduced or changed.
+- 1. New or changed security conditions can be checked locally without changing assumptions used by other components.
+- 2. A bounded interaction changes another component's security assumptions and needs targeted integration review or fuzzing.
+- 3. A shared authorization, trust or validation invariant changes across multiple components, requiring coordinated adversarial scenarios beyond a bounded interaction.
+
+*Inherited security properties do not score again. Severity alone does not determine testing breadth; a critical but local check may remain level 1 or 2.
+
+##### UNSP — Unspecified behavior requiring cross-client consensus
+
+The supplied normative specification leaves a constructible, observable protocol outcome unresolved. Distinguish actual omissions or contradictions from dependency text or implementation history missing from the assessment packet.
+
+- 0. No unresolved protocol outcome is identified in the supplied rules; missing external evidence alone is not an omission in the specification.
+- 1. A localized detail is omitted but the supplied surrounding rules support one intended outcome without competing normative interpretations.
+- 2. Localized competing outcomes or contradictory rules require specification/client agreement before expected results can be fixed.
+- 3. Previously unspecified and previously unobservable behavior becomes consensus-visible, requiring agreement on a shared rule and re-baselining across behavioral families.
+
+*Use the supplied specification version. Do not infer devnet maturity, implementation agreement or discussion outcomes. If an absent dependency might define the behavior, mark the evidence gap rather than asserting it is unspecified.
+
+##### XEIP — Cross-EIP interactions
+
+Additional coordinated cases are needed because the target's new or changed behavior interacts with behavior defined by another EIP, including behavior whose defining rules are unchanged. Identify the interaction, not merely the citation or dependency. Inherited prerequisite tests, unchanged ancestor mechanisms and optional application designs do not automatically count.
+
+- 0. No additional interaction tests with another EIP are required; dependencies may be present but unaffected in this sense.
+- 1. Interactions need only local compatibility checks; the target's behavior can otherwise be tested independently.
+- 2. At least one interaction needs coordinated cross-EIP cases, without the coupled multi-EIP test restructuring in level 3.
+- 3. The target's changes couple behavior from multiple EIPs, requiring coordinated scenarios across those interactions or restructuring shared vectors; the other EIPs' own rules need not change. A list of dependencies alone is insufficient.
+- **+1 for every 3 additional interacting EIPs beyond the first 3**, each requiring target-specific coordinated cases. Count each EIP once and identify those cases. Exclude mere citations and tests of the other EIP's own behavior.
+
+*Add the bonus to the base score at any level; it depends only on the number of qualifying EIPs. Count only EIPs needing their own target-specific coordinated cases; local compatibility checks alone do not qualify for the bonus. Interacting EIPs may be from past forks or the assessed same-fork scenario and need not be prerequisites; identify that scenario. Exceptional 4 is not a substitute for the bonus. Missing dependency semantics may leave an interaction unresolved rather than absent.
+
 
 ### Checklist
 
-| Anchor | Score (0–3) | Rationale |
-|---|---:|---|
-| **EVM Gas rule changes** |   |   |
-| **State-access ordering within opcode execution** |   |   |
-| **Blob gas accounting changes** |   |   |
-| **State gas accounting changes** |   |   |
-| **New EVM gas refund** |   |   |
-| **Patterns affecting pre-existing tests** |   |   |
-| **New invariant on pre-existing tests** |   |   |
-| **Transition-tool interface changes** |   |   |
-| **New test-framework primitives** |   |   |
-| **Cryptography-related testing** |   |   |
-| **Edge/boundary conditions** |   |   |
-| **Block syncing changes** |   |   |
-| **Engine API changes** |   |   |
-| **Added system contracts** |   |   |
-| **Modified system contracts** |   |   |
-| **Added opcodes** |   |   |
-| **Modified opcodes** |   |   |
-| **Added precompiles** |   |   |
-| **Modified precompiles** |   |   |
-| **Encoding changes (RLP/SSZ)** |   |   |
-| **New transaction types** |   |   |
-| **New or modified transaction validity mechanisms** |   |   |
-| **New block / header fields** |   |   |
-| **New fork activation mechanism** |   |   |
-| **Performance risks** |   |   |
-| **Security risks** |   |   |
-| **Unspecified behavior requiring cross-client consensus** |   |   |
-| **Cross-EIP interactions** (uncapped) |   |   |
+| Abbrev. | Criterion | Score (0–3) | Rationale |
+|---|---|---:|---|
+| `GAS` | **EVM Gas rule changes** |   |   |
+| `SAO` | **State-access ordering within opcode execution** |   |   |
+| `BLOB` | **Blob gas accounting changes** |   |   |
+| `SGAS` | **State gas accounting changes** |   |   |
+| `RFND` | **New EVM gas refund** |   |   |
+| `PAT` | **Patterns affecting pre-existing tests** |   |   |
+| `INV` | **New invariant on pre-existing tests** |   |   |
+| `T8N` | **Transition-tool interface changes** |   |   |
+| `FWK` | **New test-framework primitives** |   |   |
+| `CRYP` | **Cryptography** |   |   |
+| `EDGE` | **Edge/boundary conditions** |   |   |
+| `SYNC` | **Block syncing changes** |   |   |
+| `ENG` | **Engine API changes** |   |   |
+| `+SC` | **Added system contracts** |   |   |
+| `~SC` | **Modified system contracts** |   |   |
+| `+OP` | **Added opcodes** |   |   |
+| `~OP` | **Modified opcodes** |   |   |
+| `+PC` | **Added precompiles** |   |   |
+| `~PC` | **Modified precompiles** |   |   |
+| `ENC` | **Encoding changes (RLP/SSZ)** |   |   |
+| `TX` | **New transaction types** |   |   |
+| `TXV` | **New or modified transaction validity mechanisms** |   |   |
+| `HDR` | **New block / header fields** |   |   |
+| `FORK` | **New fork activation mechanism** |   |   |
+| `PERF` | **Performance risks** |   |   |
+| `SEC` | **Security risks** |   |   |
+| `UNSP` | **Unspecified behavior requiring cross-client consensus** |   |   |
+| `XEIP` | **Cross-EIP interactions** (uncapped) |   |   |
 
 **Total: X**
 
@@ -325,11 +358,13 @@ Introduces or modifies mechanisms that affect other EIPs in either the same or p
 
 > Evaluator notes that do not affect the score but are valid points that must be taken into consideration when the tests are being written.
 
+Record the assessed EIP revision, template revision, base fork, required prerequisites, supporting sources and material assumptions. For automated assessments, also record the model and evaluator-instruction versions. Assessments using different evidence or baselines are not directly interchangeable.
+
 #### Final Assessment
 
 | Category | Description | Value |
 |-----------|--------------|:----:|
-| **Total Score** | Sum of all anchor scores (0–84 nominal; **Cross-EIP interactions** is uncapped, so there is no hard maximum) | **`XX`** |
+| **Total Score** | Sum of all criterion scores (0–84 nominal; **Cross-EIP interactions** is uncapped, so there is no hard maximum) | **`XX`** |
 | **Complexity Tier** | Computed from total score | 🟢 / 🟡 / 🔴 |
 
 ##### Tier Interpretation
@@ -342,18 +377,22 @@ Introduces or modifies mechanisms that affect other EIPs in either the same or p
 
 ##### Revision Notes
 
-> Background only. Nothing here is needed to fill in the checklist — the anchor
+> Background only. Nothing here is needed to fill in the checklist — the criterion
 > definitions above are self-contained. Record the revision a completed
 > assessment was scored against at the top of the document; **scores are not
 > comparable across revisions**, so re-score rather than compare.
 
-###### Revision 2 — 28 anchors, nominal 0–84
+###### Revision 3 — 28 criteria, nominal 0–84
 
-Five anchors were added, one was removed, and **Cross-EIP interactions** was
-uncapped: 24 anchors become 28.
+Revision 3 aims to disambiguate the assessment criteria to improve the consistency and quality of results from AI tooling, while keeping the template usable for human assessment. It clarifies assessment scope, prerequisite attribution and evidence requirements, and revises individual criterion definitions. Encoding includes schema changes within existing formats and protocol account/state records. Cross-EIP work includes target-specific combinations with unchanged rules; inherited base tests alone do not count. Unspecified behavior concerns unresolved normative outcomes, rather than inferred implementation or devnet maturity. These scope choices can change scores even though numeric options and tier boundaries are retained. Scores are not directly interchangeable with earlier revisions.
 
-Tier thresholds were 10/20 against revision 1's 24-anchor, 72-point scale. They
-are scaled by 84/72 to 12/23 so that tier membership stays stable as the anchor
+###### Revision 2 — 28 criteria, nominal 0–84
+
+Five criteria were added, one was removed, and **Cross-EIP interactions** was
+uncapped: 24 criteria become 28.
+
+Tier thresholds were 10/20 against revision 1's 24-criterion, 72-point scale. They
+are scaled by 84/72 to 12/23 so that tier membership stays stable as the criterion
 set grows, rather than every EIP drifting upward a tier.
 
 The revision comes from
@@ -364,7 +403,7 @@ score its measured work implies, except EIP-7928, which was short by 11 points
 with no rows left to score on — it had 29 of a possible 33 across the ten rows
 that applied to it. The five new rows are where that work should have been
 recorded. See
-[proposed-anchors.md](../complexity_assessments/calibration/proposed-anchors.md)
+[proposed criteria](../complexity_assessments/calibration/proposed-anchors.md)
 for the evidence behind each one.
 
 Per-row notes:
@@ -391,7 +430,7 @@ Per-row notes:
   at the Engine API layer (JSON -> RLP/SSZ), but such migrations are coordinated
   outside the EIP process, so an EIP-scoped assessment has no use for the row. It
   was scored 0 or left blank in all 28 assessments written against revision 1, so
-  removing it changes no historical total, and it never had anchor level
+  removing it changes no historical total, and it never had criterion level
   definitions. **Encoding changes (RLP/SSZ)** covers the case if it ever arises —
   that row already reads "transaction, block or interfaces level".
 
@@ -401,9 +440,9 @@ reproduces EIP-7928's measured cost. A multiplier row was considered and deferre
 — with only one high-cost EIP observed, the data cannot identify which row should
 multiply. Until a second fork supplies a second observation, evaluators record
 multiplicative test-matrix growth under **Special Considerations**, as the
-State-access ordering anchor instructs.
+State-access ordering criterion instructs.
 
-###### Revision 1 — 24 anchors, 0–72
+###### Revision 1 — 24 criteria, 0–72
 
 Original version.
 
