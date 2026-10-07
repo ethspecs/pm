@@ -310,7 +310,7 @@ Additional coordinated cases are needed because the target's new or changed beha
 - 1. Interactions need only local compatibility checks; the target's behavior can otherwise be tested independently.
 - 2. At least one interaction needs coordinated cross-EIP cases, without the coupled multi-EIP test restructuring in level 3.
 - 3. The target's changes couple behavior from multiple EIPs, requiring coordinated scenarios across those interactions or restructuring shared vectors; the other EIPs' own rules need not change. A list of dependencies alone is insufficient.
-- **+1 for every 3 additional interacting EIPs beyond the first 3**, each requiring its own additional coordinated cases. Count each EIP once, identify those cases, and exclude mere references or unchanged inheritance.
+- **+1 for every 3 additional interacting EIPs beyond the first 3**, each requiring target-specific coordinated cases. Count each EIP once and identify those cases. Exclude mere citations and tests of the other EIP's own behavior.
 
 *Add the bonus after the base score. Count only EIPs needing their own target-specific coordinated cases; local compatibility checks alone do not qualify for the bonus. Interacting EIPs may be from past forks or the assessed same-fork scenario and need not be prerequisites; identify that scenario. Exceptional 4 is not a substitute for the bonus. Missing dependency semantics may leave an interaction unresolved rather than absent.
 
