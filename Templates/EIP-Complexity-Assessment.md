@@ -89,14 +89,14 @@ Baseline tests need changed inputs, execution steps or expected results because 
 
 ##### INV — New invariant on pre-existing tests
 
-Baseline tests must additionally assert a distinct output or invariant produced by the target. This differs from reworking their inputs or existing expected results.
+Baseline tests must additionally check an output that did not exist before the target, such as a new log, header or receipt field, block commitment or protocol-mandated storage write produced while they run. Changed gas costs, limits or existing expected values are rework under Patterns affecting pre-existing tests, not a new assertion. Attribute an assertion introduced by a prerequisite to that prerequisite.
 
 - 0. Baseline tests need no additional assertion.
 - 1. Only a restricted parameter or boundary subset within one family needs the assertion.
 - 2. Ordinary cases across one or more families need the assertion, but level 3 is not met.
 - 3. Every test in the target fork needs the assertion regardless of its subject, and pre-fork vectors must also be re-derived; both requirements need evidence.
 
-*A universal assertion without pre-fork vector changes is level 2. Score both test-impact criteria only when both kinds of work are required.
+*A universal assertion without pre-fork vector changes is level 2.
 
 ##### T8N — Transition-tool interface changes
 
